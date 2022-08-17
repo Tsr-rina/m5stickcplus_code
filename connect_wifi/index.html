@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="jp">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REMOTE-CONTROLLER</title>
+<!-- CSS処理（ブラウザページ装飾）------------------------ -->
+  <style>
+    body{font-family: sans-serif; background-color: #22578b; max-width: 480px; margin: 0 auto; align-items: center;}
+    h1 {color:#ffffff; text-align: center; font-size: 28px; margin: 10px auto;}
+    div {display: flex; flex-direction: row; justify-content: center; margin-top: 10px;}
+    p {margin: 0px;}
+    td {padding: 0px 15px; width: 110px; color:#ffffff; text-align: center; font-size: 18px; width: auto;}
+    .btn {height: 70px; width: 100px; color: #555555; background-color: #dddde9; font-size: 18px; font-weight: bold; border-radius: 7%; margin: 0 10px; -webkit-appearance: none;}
+    .btn_on {background-color: springgreen;}
+  </style>
+</head>
+<!-- html処理（ブラウザ表示）----------------------------- -->
+<body>
+  <h1>REMOTE-CONTROLLER</h1>
+  <div>
+    <!-- ボタンが複数の場合は以下をコピペで増やす。idのbtn番号変更 -->
+    <button class="btn" id="btn0">ボタン0</button>
+  </div>
+  <div> <table border = "1">
+    <!-- 表示内容が複数の場合は以下をコピペで増やす。idはJSONのkeyに変更 -->
+    <tr><td><p>アナログ<br>入力電圧</p></td> <td><span id="v_in">0</span><span>V</span></td></tr>
+  </table> </div>
+<!-- 以下はおまけ、M5CAMERAの「IPアドレス:81/stream」の動画表示 -->
+  <div>
+    <form id="id_form1" onsubmit="return startStream()">
+      <input id="input_IP" type="text" placeholder="カメラIPアドレス" />
+    </form>
+  </div>
+  <hr width='90%' />
+  <div id="output"></div>
+<!-- JavaScript処理--------------------------------------- -->
+  <script type="text/javascript">
+    let btn = [];
+    const btnOn = (i) => {  //ボタンON時処理（ボタン番号「i」ごとに分岐、複数可）
+      btn[i].classList.add('btn_on');
+      switch (i) {
+        case 0: getBtnOn(i); break;
+      }
+    }
+    const btnOff = (i) => {  //ボタンOFF時処理（ボタン番号「i」ごとに分岐、複数可）
+      btn[i].classList.remove('btn_on');
+      switch (i) {
+        case 0: getBtnOff(i); break;
+      }
+    }
+    for (let i = 0; i < 1; i++) { //ブラウザボタン状態取得（イベント処理、複数可）※i=btn番号
+      btn[i] = document.getElementById('btn' + i);
+      btn[i].addEventListener('touchstart', (e) => {e.preventDefault(); btnOn(i);} );
+      btn[i].addEventListener('mousedown', () => {btnOn(i);} );
+      btn[i].addEventListener('touchend', () => {btnOff(i);} );
+      btn[i].addEventListener('mouseup', () => {btnOff(i);} );
+    }
+    let get_data;
+    async function getData() {  //マイコンボード側JSONデータ取得（インターバル）
+      await fetch("/get/data")
+        .then((response) => {if (response.ok) {return response.json();} else {throw new Error();} })
+        .then((json) => {
+          console.log(json);
+          get_data = json;
+          let el;
+          //以下に取得したデータごとに処理したい内容を記入
+          el = document.querySelector('#v_in'); //アナログ電圧表示要素取得(idはJSONのキー)
+          el.textContent = get_data.v_in;       //アナログ電圧表示更新
+          if (get_data.LED_state == 0) {btn[0].classList.add('btn_on');}  //LEDがONならブラウザボタン緑
+          else {btn[0].classList.remove('btn_on');}                       //LEDがOFFならブラウザボタン白
+        })
+        .catch((error) => console.log(error));
+    }
+    setInterval(getData, 1000); //インターバル設定（1秒ごとに本体データ取得）
+    
+    async function getBtnOn(i) {  //ブラウザボタンON時処理（複数可）
+      let link;
+      switch (i) {
+        case 0: link = "/get/btn0_on"; break; //ブラウザボタン番号（btn i）ごとに処理を分岐
+      }
+      await fetch(link)
+        .then((response) => { if (response.ok) {return response.text();} else {throw new Error();} })
+        .then((text) => { console.log(text) })
+        .catch((error) => console.log(error));
+    }
+    async function getBtnOff(i) { //ブラウザボタンOFF時処理（複数可）
+      let link;
+      switch (i) {
+        case 0: link = "/get/btn0_off"; break;  //ブラウザボタン番号（btn i）ごとに処理を分岐
+      }
+      await fetch(link)
+        .then((response) => { if (response.ok) {return response.text();} else {throw new Error();} })
+        .then((text) => { console.log(text) })
+        .catch((error) => console.log(error));
+    }
+    // M5CAMERA動画取得
+    const startStream = () => {
+      let target = document.getElementById("output");
+      let stream = document.forms.id_form1.input_IP.value;
+      console.log("Start Stream:" + stream);
+      stream = "<img src= '"+ stream + "' width='90%' height='90%'>";
+      target.innerHTML = stream;
+      return false;
+    }
+  </script>
+</body>
+</html>
