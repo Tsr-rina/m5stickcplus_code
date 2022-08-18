@@ -25,14 +25,6 @@
     <!-- 表示内容が複数の場合は以下をコピペで増やす。idはJSONのkeyに変更 -->
     <tr><td><p>アナログ<br>入力電圧</p></td> <td><span id="v_in">0</span><span>V</span></td></tr>
   </table> </div>
-<!-- 以下はおまけ、M5CAMERAの「IPアドレス:81/stream」の動画表示 -->
-  <div>
-    <form id="id_form1" onsubmit="return startStream()">
-      <input id="input_IP" type="text" placeholder="カメラIPアドレス" />
-    </form>
-  </div>
-  <hr width='90%' />
-  <div id="output"></div>
 <!-- JavaScript処理--------------------------------------- -->
   <script type="text/javascript">
     let btn = [];
