@@ -91,15 +91,6 @@
         .then((text) => { console.log(text) })
         .catch((error) => console.log(error));
     }
-    // M5CAMERA動画取得
-    const startStream = () => {
-      let target = document.getElementById("output");
-      let stream = document.forms.id_form1.input_IP.value;
-      console.log("Start Stream:" + stream);
-      stream = "<img src= '"+ stream + "' width='90%' height='90%'>";
-      target.innerHTML = stream;
-      return false;
-    }
   </script>
 </body>
 </html>
