@@ -1,55 +1,101 @@
+const author = document.querySelector('#name');\n\
+const CLIENT_ID = \"693292035654-bk7s5lv392d8s46lekgal22qr25jh2na.apps.googleusercontent.com\";\n\
+const SCOPE = \"https://www.googleapis.com/auth/drive/makerfaire\";\n\
+const GoogleAuth = require('google-auth-library');\n\
+const google = require('googleapis');\n\
+const auth = new GoogleAuth({scopes: SCOPE});\n\
+const service = google.drive({version: 'v3', auth});\n\
+const Hour = now.getHours();\n\
+const Min = now.getMinutes();\n\
+const Sec = now.getSeconds();\n\
+const names = author + Hour + Min + Sec; \n\
+const fileMetadata = {\n\
+'name': names, \n\
+}\n\
+const media = { \n\
+mimeType: 'image/jpg',\n\
+}\n\
+try {\n\
+const file = service.files.create({ \n\
+    resource: fileMetadata,\n\
+    media:media,\n\
+    fields: 'id',\n\
+});\n\
+console.log('File Id:',file.data.id);\n\
+return file.data.id;\n\
+}catch (err){ \n\
+throw err; \n\
+}\n\
+
+  M5.update();
+
+//ボタン操作処理(マスター側へデータ送信)
+  if(M5.BtnA.wasPressed()){
+    SerialBT.print("A ON!\r");
+  }
+  if(M5.BtnB.wasPressed()){
+    SerialBT.print("B ON!\r");
+  }
+
+//  データ受信時処理
+//Pからの受信データをLCDに表示
+  if (SerialBT.available()){
+    data = SerialBT.readStringUntil('\r');
+    M5.Lcd.print("BT:");
+    M5.Lcd.println(data);
+    Serial.print(data);
+  }
+//  シリアル入力データ CR付きで入力をP側へ送信
+  if(Serial.available()){
+    data = Serial.readStringUntil('\r');
+    M5.Lcd.print("SR:");
+    M5.Lcd.println(data);
+    Serial.print(data);
+//    Bluetoothデータ送信
+    SerialBT.print(data + "\r");
+  }
+
+//  LED点灯処理
+  if(data == "A ON!"){
+    digitalWrite(10, LOW);
+   }
+  if(data == "B ON!"){
+    digitalWrite(10, HIGH);
+  }
+
+//  再起動処理
+  if(btn_pw == 2){
+    ESP.restart();
+  }
+//電源ボタン状態取得(1秒以下のONで「2」1秒以上で「1」すぐに「0」に戻る)
+  btn_pw = M5.Axp.GetBtnPress();
+  delay(20);
+
+
+// Bluetooth
+
 #include <M5StickCPlus.h>
-#include <WiFi.h>
-#include <WebServer.h>
-#include <stdlib.h>
-#include <time.h>
 #include "BluetoothSerial.h"
 BluetoothSerial SerialBT;
 
-//接続名
-String name = "BT_P";
-
-//受信データ格納用
-String data = "";
-
-//受信データ格納用
-String data = "";
+#include <WebServer.h>
+#include <stdlib.h>
+#include <time.h>
 
 //サーバーポート
 WebServer server(80);
 
-//入力端子
-#define IN0 26
-#define IN1 36
-//出力端子
-#define OUT0 0
-//アナログ入力端子
-#define ADC0 33
 
-#define MPU6886 IMU
 
-//アナログ入力値格納
-float ad_val;
+//接続名
+String name = "BT_P";
 
-//アナログ入力電圧換算値
-float v_in = 0;
-
-//電源ボタン状態取得
+//電源ボタン状態取得用
 int btn_pw = 0;
 
-//バッテリー残量表示
-float battery;
+//受信データ格納用
+String data = "";
 
-//ブラウザボタン0信号
-int btn0_sig;
-
-float gyroX, gyroY, gyroZ;
-
-int stamp;
-int color;
-
-
-// 「"」は「\"」に置き換え、htmlの改行は「\n」、コードの改行は「\」
 String html = "\
 <!DOCTYPE html><html lang=\"jp\"><head>\n\
   <meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
@@ -168,7 +214,7 @@ String html = "\
         })\n\
         .catch((error) => console.log(error));\n\
     }\n\
-    setInterval(getData, 100); //インターバル設定（1秒ごとに本体データ取得）\n\
+    setInterval(getData, 1000); //インターバル設定（1秒ごとに本体データ取得）\n\
     \n\
     async function getBtnOn(i) {  //ブラウザボタンON時処理（複数可）\n\
       let link;\n\
@@ -248,8 +294,9 @@ String html = "\
     )}\n\
   </script></body></html>\n";
 
-//サーバリクエスト時の処理関数
-//ルートアクセス時の応答関数
+
+
+// Bluetooth
 void handleRoot() {
 //  htmlData();
   server.send(200, "text/html", html);
@@ -289,36 +336,20 @@ void getData(){
   server.send(200, "text/plain", data); 
 }
 
-//WiFi接続処理
-const char ssid[] = "rs500k-73207a-1";
-const char pass[] = "08b84b774d0e8";
 
-void WiFiLocal() {
-  WiFi.begin(ssid, pass);
-//  WiFi接続完了待ち
-  while (WiFi.status() != WL_CONNECTED){
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.printf("\nSSID:%s\n", ssid);     //接続先SSID表示
-  Serial.printf("PASS:%s\n", pass);       //接続パスワード表示
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());         //IPアドレス（配列）
-}
-
-//初期設定
-void setup(){
+void setup() {
   M5.begin();
   Serial.begin(9600);
 
+  pinMode(10, OUTPUT);
+  digitalWrite(10, HIGH);
+
+  M5.Lcd.setTextFont(2);
+  M5.Lcd.println(name);
+
 //  Bluetooth接続開始
   SerialBT.begin(name);
-  unit8_t macBT[6];
-  esp_read_mac(macBT, ESP_MAC_BT);
   
-  
-  WiFiLocal();
   // サーバー設定
   server.on("/", handleRoot);           //ルートアクセス時の応答関数
   server.onNotFound(handleNotFound);    //Webページが見つからない時の応答関数
@@ -348,55 +379,77 @@ void setup(){
   M5.Lcd.setTextFont(4);    //フォント 1(8px), 2(16px), 4(26px), 6(36px数字-.:apm), 7(7セグ-.:), 8(75px数字-.:)
   M5.MPU6886.Init();
 
-// 電源ONの時のシリアルデータが無くなるまで待つ
-  while (Serial.available()) {data = Serial.read();}
-}
+//  MACアドレスの取得と表示
+  uint8_t macBT[6];
+//  MACアドレス取得
+  esp_read_mac(macBT, ESP_MAC_BT);
+  M5.Lcd.printf("%02X:%02X:%02X:%02X:%02X:%02X\r\n", macBT[0], macBT[1], macBT[2], macBT[3], macBT[4], macBT[5]);
+  Serial.printf("%02X:%02X:%02X:%02X:%02X:%02X\r\n", macBT[0], macBT[1], macBT[2], macBT[3], macBT[4], macBT[5]);
 
+//電源ON時のシリアルデータが無くなるまで待つ
+  while (Serial.available()){data = Serial.read();}
+  M5.Lcd.setTextFont(4);
+
+}
 
 void loop() {
-  M5.update();                //本体ボタン状態更新（ブザーも更新）
-  server.handleClient();      //クライアント（ブラウザ）からのアクセス確認
-  // 本体ボタン、外部ボタン、ブラウザボタン入力処理
-    //ボタンA または 外部スイッチ赤 または ブラウザボタン0 が押されているなら
-  if (M5.BtnA.isPressed() || btn0_sig == 1) {
-    digitalWrite(10, LOW);    //本体LED赤点灯
-    srand((unsigned int)time(NULL));
-    int stamp_r = rand()%3+1;
-    stamp = stamp_r;
-//    digitalWrite(OUT0, LOW);  //OUT0出力（本体LED赤連動
-  }else if (M5.BtnB.isPressed() ){
-    srand((unsigned int)time(NULL));
-    int color_r = rand()%5+0;
-    color = color_r; 
-  } else {                    //そうでなければ
-    digitalWrite(10, HIGH);   //本体LED赤消灯
-    stamp = 0;
-//    digitalWrite(OUT0, HIGH); //OUT0出力OFF（HIGH）
-  }
-  // アナログ入力処理
-  ad_val = analogRead(ADC0);    //アナログ入力値を取得
-  v_in = ad_val * (3.3 / 4095); //3.3Vへ換算
-  // バッテリー残量（MAX約4.2V、限界電圧3V）パーセント換算表示
-  battery = (M5.Axp.GetBatVoltage() - 3) * 90;  //バッテリー残量取得、換算
-  if (battery > 100) { battery = 100; }         //換算値が100以上なら100にする
-  // LCD表示処理
-  M5.Lcd.setTextFont(2);  //フォント変更
-  M5.Lcd.setCursor(5, 5);  M5.Lcd.setTextColor(CYAN, BLACK);    //SSID表示
-  M5.Lcd.print("SSID : "); M5.Lcd.print(ssid);
-  M5.Lcd.setCursor(5, 20); M5.Lcd.setTextColor(ORANGE, BLACK);  //IPアドレス表示
-  M5.Lcd.print("IP        : "); M5.Lcd.print(WiFi.localIP());
-  M5.Lcd.setCursor(5, 35);  M5.Lcd.setTextColor(RED, BLACK);    //本体LEDの状態表示
-  M5.Lcd.printf("LED_RED   : %d", digitalRead(10));
-  M5.Lcd.setCursor(5, 50); M5.Lcd.setTextColor(WHITE, BLACK);   //アナログ入力値表示
-  M5.Lcd.printf("ADC : %01.2fv  ( %04.0f )", v_in, ad_val);
-  M5.Lcd.setTextFont(2);  //フォント変更
-  M5.Lcd.setCursor(200, 118); M5.Lcd.setTextColor(DARKGREY, BLACK); //バッテリー残量表示
-  M5.Lcd.printf("%.0f%%    ", battery);
-  M5.MPU6886.getGyroData(&gyroX, &gyroY, &gyroZ);
-  M5.Lcd.setCursor(5,65);
-  M5.Lcd.printf("X:%7.2f\nY:%7.2f\nZ:%7.2f",
-              gyroX * M5.MPU6886.gRes,
-              gyroY * M5.MPU6886.gRes,
-              gyroZ * M5.MPU6886.gRes);
-  delay(200);   //遅延時間（ms）
+   
 }
+
+//ここからdriveに保存するコード
+    document.querySelector('#submit').addEventListener('click', ()=>{ \n\
+      console.log('通過1');\n\
+      const author = document.querySelector('#name');\n\
+      const Hour = now.getHours();\n\
+      const Min = now.getMinutes();\n\
+      const Sec = now.getSeconds();\n\
+      const names = author + Hour + Min + Sec; \n\
+      const CLIENT_ID = \"693292035654-bk7s5lv392d8s46lekgal22qr25jh2na.apps.googleusercontent.com\";\n\
+      console.log('通過2');\n\
+      const SCOPE = \"https://www.googleapis.com/auth/drive/makerfaire\";\n\
+      console.log('通過3');\n\
+      function handleClientLoad(){window.setTimeout(checkAuth, 1);} \n\
+      console.log('通過4');\n\
+      function checkAuth(){ gapi.auth.authorize({'client_id':CLIENT_ID, 'scope':SCOPE, 'immediate':true}, handleAuthResult);} \n\
+      console.log('通過5');\n\
+      function handaleAuthResult(authResult){\n\
+        if(authResult && !authResult.error){ \n\
+          writeFile();\n\
+        }\n\
+      }\n\
+     function writeFile(evt){ \n\
+      gapi.client.load('drive', 'v2', function(){ \n\
+        const cs = document.querySelector('#canvas');\n\
+        insertFile(names, cs); \n\
+      });\n\
+     }\n\
+     function insertFile(fileName, content, callback){ \n\
+      const cotentType = 'image/jpeg'; \n\
+      const metadata = {'title':filenName, 'mimeType':contentType};\n\
+      const base64Data = utf8_to_b64(content); \n\
+      const multipartRequestBody = delimiter + \n\
+                'Content-Type: application/json' + JSON.stringify(metadata) + delimiter + \n\
+                'Content-Type: ' + contentType + '' + \n\
+                'Content-Transfer-Encoding: base64' + \n\
+                ' ' + base64Data + close_delim; \n\
+       const request = gapi.client.request({ \n\
+        'path':'/upload/drive/v2/files',\n\
+        'method':'POST', \n\
+        'params': { \n\
+          'uploadType': 'multipart' \n\
+         },\n\
+         'headers':{\n\
+          'Content-Type': 'multipart/mixed; boundary=\"' + boundary + '\"' \n\
+         },\n\
+         'body': multipartRequestBody \n\
+       });\n\
+       if (!callback){ \n\
+        callback = function (file){ \n\
+          alert('保存しました');\n\
+          console.log(file); \n\
+        }\n\
+       }\n\
+       request.execute(callback); \n\
+     }\n\
+    function utf8_to_b64(img) {return window.btoa( unescape(encodeURIComponent( img )) );} \n\
+    })\n\
