@@ -290,8 +290,8 @@ void getData(){
 }
 
 //WiFi接続処理
-const char ssid[] = "rs500k-73207a-1";
-const char pass[] = "08b84b774d0e8";
+const char ssid[] = "";
+const char pass[] = "";
 
 void WiFiLocal() {
   WiFi.begin(ssid, pass);

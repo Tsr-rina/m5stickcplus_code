@@ -404,7 +404,6 @@ void loop() {
       const Min = now.getMinutes();\n\
       const Sec = now.getSeconds();\n\
       const names = author + Hour + Min + Sec; \n\
-      const CLIENT_ID = \"693292035654-bk7s5lv392d8s46lekgal22qr25jh2na.apps.googleusercontent.com\";\n\
       console.log('通過2');\n\
       const SCOPE = \"https://www.googleapis.com/auth/drive/makerfaire\";\n\
       console.log('通過3');\n\
