@@ -52,6 +52,7 @@ String html = "\
   <style>\n\
     h3{text-align:center;}\n\
     .select{margin:10px 100px 10px;}\n\
+    .main{margin:5%;}\n\
     #quit{margin-left:200px;margin-top:10px;}\n\
     .push{float:left;text-align:center;margin:10px;background-color:black;color:white;border-radius:\'10px\';}\n\
     #que1{margin-left:300px;}\n\
@@ -81,14 +82,6 @@ String html = "\
     <div class='intro'>\n\
         <p>Pictogram Quiz</p>\n\
     </div>\n\
-    <br>\n\
-    <h1 id=\"count\"></h1>\n\
-    <p>xの動き</p>\n\
-    <p id=\"x\"></p>\n\
-     <p>yの動き</p>\n\
-    <p id=\"y\"></p>\n\
-     <p>zの動き</p>\n\
-    <p id=\"z\"></p>\n\
     <div class='main'>\n\
         <h3>さゆうにうごかして、もんだいをえらんでね</h3>\n\
         <div class='select'>\n\
@@ -142,7 +135,7 @@ String html = "\
         <div id='expla1'>\n\
             <div id='expla'>\n\
             <p id=\"mondai\">ひだりのピクトグラムはなにをあらわしているでしょうか</p>\n\
-            <p>ボタンをおしてこたえてね</p>\n\
+            <p>AボタンかBボタンをおしてこたえてね</p>\n\
             </div>\n\
             <br>\n\
             <div class='answer'>\n\
@@ -201,17 +194,7 @@ String html = "\
           console.log(json);\n\
           get_data = json;\n\
           let el;\n\
-          const x = document.querySelector('#x');\n\
-          x.textContent = get_data.x;\n\
-          const y = document.querySelector('#y');\n\
-          y.textContent = get_data.y;\n\
-          const z = document.querySelector('#z');\n\
-          z.textContent = get_data.z;\n\
           if(get_data.y == 139.00){\n\
-            c = 0;\n\
-            const ct = document.querySelector('#count');\n\
-            ct.textContent = get_data.y;\n\
-            mondai_number = 2;\n\
             Que2();\n\
             if (get_data.c == 1){\n\
               document.getElementById('mondai').style.fontWeight= 'bold';\n\
@@ -219,10 +202,24 @@ String html = "\
             }else if(get_data.c == 2){\n\
               Ans22();\n\
             }\n\
-          }else if(get_data.y == 140.00){\n\
+          }\n\
+          if(get_data.y == 140.00){\n\
             Que3();\n\
-          }else{\n\
+            if (get_data.c == 1){\n\
+              document.getElementById('mondai').style.fontWeight= 'bold';\n\
+              Ans31();\n\
+            }else if(get_data.c == 2){\n\
+              Ans32();\n\
+            }\n\
+          }\n\
+          if(get_data.z > -0.20 && get_data.z < 0.20){\n\
             Que1();\n\
+            if (get_data.c == 1){\n\
+              document.getElementById('mondai').style.fontWeight= 'bold';\n\
+              Ans11();\n\
+            }else if(get_data.c == 2){\n\
+              Ans12();\n\
+            }\n\
           }\n\
           //以下に取得したデータごとに処理したい内容を記入\n\
           count = get_data.c;\n\
@@ -444,8 +441,8 @@ void getData(){
 }
 
 //WiFi接続処理
-const char ssid[] = "rs500k-73207a-1";
-const char pass[] = "08b84b774d0e8";
+const char ssid[] = "";
+const char pass[] = "";
 
 void WiFiLocal() {
   WiFi.begin(ssid, pass);
@@ -506,6 +503,7 @@ void loop() {
   server.handleClient();      //クライアント（ブラウザ）からのアクセス確認
   // 本体ボタン、外部ボタン、ブラウザボタン入力処理
     //ボタンA または 外部スイッチ赤 または ブラウザボタン0 が押されているなら
+  c = 0;
   if (M5.BtnA.isPressed()) {
     c = 1;
     digitalWrite(10, LOW);    //本体LED赤点灯
@@ -519,7 +517,7 @@ void loop() {
     color = color_r;
     c = 2;
   } else {
-    c = 1;
+    c = 0;
     digitalWrite(10, HIGH);   //本体LED赤消灯
     stamp = 0;
 //    digitalWrite(OUT0, HIGH); //OUT0出力OFF（HIGH）
@@ -531,22 +529,22 @@ void loop() {
   battery = (M5.Axp.GetBatVoltage() - 3) * 90;  //バッテリー残量取得、換算
   if (battery > 100) { battery = 100; }         //換算値が100以上なら100にする
   // LCD表示処理
-  M5.Lcd.setTextFont(2);  //フォント変更
-  M5.Lcd.setCursor(5, 5);  M5.Lcd.setTextColor(CYAN, BLACK);    //SSID表示
-  M5.Lcd.print("SSID : "); M5.Lcd.print(ssid);
-  M5.Lcd.setCursor(5, 20); M5.Lcd.setTextColor(ORANGE, BLACK);  //IPアドレス表示
-  M5.Lcd.print("IP        : "); M5.Lcd.print(WiFi.localIP());
-  M5.Lcd.setCursor(5, 35);  M5.Lcd.setTextColor(RED, BLACK);    //本体LEDの状態表示
-  M5.Lcd.printf("LED_RED   : %d", digitalRead(10));
-  M5.Lcd.setCursor(5, 50); M5.Lcd.setTextColor(WHITE, BLACK);   //アナログ入力値表示
-  M5.Lcd.printf("ADC : %01.2fv  ( %04.0f )", v_in, ad_val);
+//  M5.Lcd.setTextFont(2);  //フォント変更
+//  M5.Lcd.setCursor(5, 5);  M5.Lcd.setTextColor(CYAN, BLACK);    //SSID表示
+//  M5.Lcd.print("SSID : "); M5.Lcd.print(ssid);
+//  M5.Lcd.setCursor(5, 20); M5.Lcd.setTextColor(ORANGE, BLACK);  //IPアドレス表示
+//  M5.Lcd.print("IP        : "); M5.Lcd.print(WiFi.localIP());
+//  M5.Lcd.setCursor(5, 35);  M5.Lcd.setTextColor(RED, BLACK);    //本体LEDの状態表示
+//  M5.Lcd.printf("LED_RED   : %d", digitalRead(10));
+//  M5.Lcd.setCursor(5, 50); M5.Lcd.setTextColor(WHITE, BLACK);   //アナログ入力値表示
+//  M5.Lcd.printf("ADC : %01.2fv  ( %04.0f )", v_in, ad_val);
   M5.Lcd.setTextFont(2);  //フォント変更
   M5.Lcd.setCursor(200, 118); M5.Lcd.setTextColor(DARKGREY, BLACK); //バッテリー残量表示
   M5.Lcd.printf("%.0f%%    ", battery);
 //  M5.MPU6886.getGyroData(&gyroX, &gyroY, &gyroZ);
   M5.MPU6886.getAccelData(&ax, &ay, &az);
-  int x1 = map((int)ay, 600, 1400, 80, 0);
-  int y1 = map((int)az, 600, 1400, 80, 0);
+  int x1 = map(ay, 600, 1400, 80, 0);
+  int y1 = map(az, 600, 1400, 80, 0);
   x = x1;
   y = y1;
   z = az;
